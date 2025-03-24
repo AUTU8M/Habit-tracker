@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/components/my_drawer.dart';
 import 'package:habit_tracker/components/my_habit_tile.dart';
+import 'package:habit_tracker/components/my_heat_map.dart';
 import 'package:habit_tracker/database/habit_database.dart';
 import 'package:habit_tracker/models/habit.dart';
 import 'package:habit_tracker/util/habit_util.dart';
@@ -166,7 +167,37 @@ class _HomePageState extends State<HomePage> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
       ),
-      body: _buildHabitList(),
+      body: ListView(
+        children: [
+          //heatmap
+          _buildHeatMap(),
+          //habitlist
+          _buildHabitList(),
+        ],
+      ),
+    );
+  }
+
+  //build heat map
+  Widget _buildHeatMap() {
+    //habit database
+    final habitDatabase = context.watch<HabitDatabase>();
+    //current habits
+    List<Habit> currentHabits = habitDatabase.currentHabits;
+    //return heat map UI
+    return FutureBuilder(
+      future: habitDatabase.getFirstLaunchDate(),
+      builder: (context, snapshot) {
+        //once the data is available
+        if (snapshot.hasData) {
+          return MyHeatMap(
+            startDate: snapshot.data!,
+            datasets: prepHeatMapDataSet(currentHabits),
+          );
+        } else {
+          return Container();
+        }
+      },
     );
   }
 
@@ -181,6 +212,8 @@ class _HomePageState extends State<HomePage> {
     //return list of habits UI
     return ListView.builder(
       itemCount: currentHabits.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
         //get each individual haibit
         final habit = currentHabits[index];
